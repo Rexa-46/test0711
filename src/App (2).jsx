@@ -4,13 +4,13 @@ import {
   Bell, Menu, Plus, X, Search, ChevronDown, ChevronLeft, ChevronRight,
   ArrowLeftRight, Landmark, TrendingUp, TrendingDown, Receipt,
   Trash2, Grid3x3, PieChart as PieChartIcon, Home as HomeIcon,
-  Tag, Check, Star, CreditCard, Lock, Sun, Moon, Image as ImageIcon,
+  Tag, Check, Star, Sun, Moon, Image as ImageIcon,
   Repeat, Download, Upload, Bitcoin, Landmark as Bank, CalendarDays,
-  BellRing, FileSpreadsheet, Printer, Users, ShieldCheck, Palette, Save,
-  Eye, EyeOff, StickyNote, Mic, MicOff, LayoutGrid, LayoutList, ArrowUp, ArrowDown,
+  BellRing, FileSpreadsheet, Printer, Users, ShieldCheck, Save,
+  Eye, EyeOff, StickyNote, Mic, LayoutGrid, LayoutList, ArrowUp, ArrowDown,
   DollarSign, RefreshCw, Sparkles, Type, Target, Fingerprint, Pencil, RotateCcw, Eraser,
   Fuel, ShoppingCart, Zap, Car, Pill, HandCoins, Shirt, Wifi, Smartphone, Drama, Gift, Wrench,
-  Banknote, Building2, Droplets, Bus, CarTaxiFront, ConciergeBell, Minus, ChevronUp, Utensils
+  Banknote, Building2, Droplets, Bus, CarTaxiFront, ConciergeBell, Minus, Utensils
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, Sector, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -52,10 +52,6 @@ function faLongDate(d) {
 }
 function faMonthYear(d) {
   try { return new Intl.DateTimeFormat("fa-IR", { month: "long", year: "numeric" }).format(d); }
-  catch { return ""; }
-}
-function faTime(d) {
-  try { return new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(d); }
   catch { return ""; }
 }
 function addMonths(dateStr, n) {
@@ -300,29 +296,6 @@ async function saveKey(key, value, shared) {
 function useT() { return React.useContext(ThemeCtx); }
 const ThemeCtx = React.createContext(THEME.light);
 
-function GaugeCircle({ value, max, color, label }) {
-  const t = useT();
-  const size = 156, stroke = 10, r = (size - stroke) / 2, c = 2 * Math.PI * r;
-  const frac = max > 0 ? Math.min(value / max, 1) : 0;
-  const dash = Math.max(frac * c, value > 0 ? 6 : 0);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-      <div style={{ position: "relative", width: size, height: size }}>
-        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={t.border} strokeWidth={stroke} />
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-            strokeDasharray={`${dash} ${c - dash}`} strokeLinecap="round" style={{ transition: "stroke-dasharray .6s" }} />
-        </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: t.text }}>{toFaInt(value)}</div>
-          <div style={{ fontSize: 10.5, color: t.sub, marginTop: 2 }}>ریال</div>
-        </div>
-      </div>
-      <div style={{ fontWeight: 700, color, fontSize: 14.5 }}>{label}</div>
-    </div>
-  );
-}
-
 /* ---------------------------------------------------------
    Exploding / stylized pie chart — click a slice to pop it out
    a little and see its label. Recharts doesn't do true 3D, so
@@ -500,7 +473,6 @@ const quickPillBtn = { display: "flex", alignItems: "center", gap: 4, border: "n
    (بدون هیچ نوشته یا کادری داخل نمودار)، فلش‌های روز قبل/بعد در دو طرف،
    و دو کادر «جمع درآمدها» / «جمع هزینه‌ها» که با لمس، نمودار را عوض می‌کنند.
 --------------------------------------------------------- */
-const CHART_COLORS = ["#F5503F", "#14AEF2", "#96C852", "#6B42B8", "#FFA726", "#EC407A", "#26A69A", "#8D6E63"];
 // هزینه‌ها: رنگ‌های قرمز/بنفش/نارنجی — درآمدها: رنگ‌های سبز/آبی
 const EXPENSE_COLORS = ["#F5503F", "#6B42B8", "#FFA726", "#EC407A", "#8D6E63", "#E53935"];
 const INCOME_COLORS = ["#96C852", "#14AEF2", "#26A69A", "#66BB6A", "#29B6F6", "#00ACC1"];
@@ -874,7 +846,6 @@ function AmountInput({ value, onChange, placeholder, style }) {
 --------------------------------------------------------- */
 // پنجره‌های پایین‌صفحه (ماشین‌حساب، انتخاب حساب) مستقیم داخل body رسم می‌شوند تا هیچ پنجره‌ی دیگری یا منوی پایین روی آن‌ها نیفتد
 const toBody = (node) => (typeof document !== "undefined" && document.body ? createPortal(node, document.body) : node);
-const toFaDigits = (x) => String(x).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]).replace(/\./g, "٫");
 function evalCalc(expr) {
   const tokens = String(expr).match(/\d+\.?\d*|\.\d+|[+\-×÷]/g);
   if (!tokens) return null;
@@ -1522,6 +1493,163 @@ function normalizeCategoriesForHierarchy(list) {
 }
 
 /* ---------------------------------------------------------
+   اسکن برگه پوز: عکس برگه → خواندن نام پذیرنده، مبلغ، تاریخ و ساعت با هوش مصنوعی
+   → پیش‌نویس هزینه (دسته‌بندی خودکار)؛ کاربر فقط حساب را انتخاب و ثبت می‌کند.
+--------------------------------------------------------- */
+function jalaliToGregorian(jy, jm, jd) {
+  jy += 1595;
+  let days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+  let gy = 400 * Math.floor(days / 146097);
+  days %= 146097;
+  if (days > 36524) {
+    gy += 100 * Math.floor(--days / 36524);
+    days %= 36524;
+    if (days >= 365) days++;
+  }
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) { gy += Math.floor((days - 1) / 365); days = (days - 1) % 365; }
+  let gd = days + 1;
+  const sal = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm = 0;
+  for (; gm < 13 && gd > sal[gm]; gm++) gd -= sal[gm];
+  return [gy, gm, gd];
+}
+// تاریخ چاپ‌شده روی برگه (شمسی یا میلادی) → YYYY-MM-DD میلادی؛ اگر نامعتبر بود null
+function slipDateToISO(raw) {
+  const m = toEnDigits(raw || "").match(/(\d{2,4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,4})/);
+  if (!m) return null;
+  let y, mo, d;
+  if (m[1].length === 4 || +m[1] > 31) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if (m[3].length === 4 || +m[3] > 31) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+  else { y = 1400 + +m[1]; mo = +m[2]; d = +m[3]; }
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  let g;
+  if (y >= 1700) g = [y, mo, d];
+  else if (y >= 1300 && y <= 1500) g = jalaliToGregorian(y, mo, d);
+  else return null;
+  const dt = new Date(Date.UTC(g[0], g[1] - 1, g[2]));
+  if (dt.getUTCMonth() !== g[1] - 1) return null;                  // مثلا ۳۱ شهریور
+  if (dt.getTime() > Date.now() + 2 * 86400000) return null;       // تاریخ آینده = خوانش اشتباه
+  return `${g[0]}-${String(g[1]).padStart(2, "0")}-${String(g[2]).padStart(2, "0")}`;
+}
+function slipTimeToHHMM(raw) {
+  const m = toEnDigits(raw || "").match(/(\d{1,2})\s*:\s*(\d{2})/);
+  if (!m || +m[1] > 23 || +m[2] > 59) return null;
+  return `${String(+m[1]).padStart(2, "0")}:${m[2]}`;
+}
+// اگر هوش مصنوعی دسته‌بندی نداد، از روی نام فروشگاه حدس بزن
+function guessExpenseCategoryId(categories, merchant) {
+  const exp = categories.filter((c) => c.kind === "expense");
+  const hay = String(merchant || "");
+  const rules = [
+    [/نان|نانوایی|بیکری|قنادی|شیرین|سوپر|مارکت|خوار|رستوران|کافه|کباب|پیتزا|ساندویچ|فست|میوه|سبزی|گوشت|مرغ|لبنی|قهوه|آبمیوه|ماهی|بستنی|چلو|برنج/, /خوراک|غذا|بازار|رستوران|سوپر/],
+    [/بنزین|پمپ|سوخت|cng/i, /بنزین|سوخت|خودرو/],
+    [/داروخانه|دارو|درمان|کلینیک|بیمارستان|دندان|آزمایش|پزشک/, /درمان|دارو|سلامت|بهداشت/],
+    [/پوشاک|لباس|کفش|کیف|مزون/, /پوشاک|لباس/],
+    [/تاکسی|اسنپ|تپسی|مترو|اتوبوس|بلیط/, /حمل|تاکسی|ایاب/],
+  ];
+  for (const [merchantRe, catRe] of rules) {
+    if (!merchantRe.test(hay)) continue;
+    const matches = exp.filter((c) => catRe.test(c.name));
+    const leaf = matches.find((c) => !exp.some((x) => x.parentId === c.id));
+    const pick = leaf || matches[0];
+    if (pick) return pick.id;
+  }
+  return null;
+}
+async function extractSlip(apiKey, imageDataUrl, categories) {
+  if (!apiKey) throw new Error("برای خواندن برگه، کلید API را در «تنظیمات پایه» وارد کن.");
+  const expense = categories.filter((c) => c.kind === "expense").slice(0, 150);
+  const pathOf = (c) => { const parts = [c.name]; let p = c, g = 0; while (p?.parentId && g++ < 6) { p = categories.find((x) => x.id === p.parentId); if (p) parts.unshift(p.name); } return parts.join(" / "); };
+  const list = expense.map((c) => ({ id: c.id, path: pathOf(c) }));
+  const prompt = `This is a photo of a payment receipt printed by a card terminal (POS slip), probably Iranian, in Persian.
+Extract these fields:
+- merchant: the shop / business name exactly as printed (Persian), e.g. "نان خورشید".
+- amount: the paid amount as an integer in RIALS, digits only. If the slip clearly says تومان, multiply by 10.
+- date: the transaction date exactly as printed, digits with "/" separators (e.g. 1405/07/11).
+- time: the transaction time as HH:MM (24h).
+- categoryId: the single best matching id from this list of expense categories, or null if none fits: ${JSON.stringify(list)}
+Return ONLY a JSON object, nothing else, exactly in this shape:
+{"merchant":"","amount":0,"date":"","time":"","categoryId":null}
+Use null for any field you cannot read.`;
+  const body = {
+    model: "claude-haiku-4-5-20251001", max_tokens: 500, temperature: 0,
+    system: "You read payment receipts accurately and reply with valid JSON only.",
+    messages: [{ role: "user", content: [
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: String(imageDataUrl).split(",")[1] || "" } },
+      { type: "text", text: prompt },
+    ] }],
+  };
+  const text = await withTimeout(callClaudeApi(apiKey, body, { connectTimeout: 10000, readTimeout: 40000 }), 45000);
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("برگه خوانده نشد؛ دوباره با نور بهتر عکس بگیر.");
+  let j; try { j = JSON.parse(m[0]); } catch { throw new Error("برگه خوانده نشد؛ دوباره با نور بهتر عکس بگیر."); }
+  const amount = Math.round(Number(toEnDigits(String(j.amount ?? "")).replace(/[^\d.]/g, "")));
+  if (!amount || amount <= 0) throw new Error("مبلغ روی برگه خوانده نشد؛ دوباره با نور بهتر عکس بگیر.");
+  const merchant = String(j.merchant || "").trim();
+  const aiCat = j.categoryId && categories.some((c) => c.id === j.categoryId && c.kind === "expense") ? j.categoryId : null;
+  return { merchant, amount, date: slipDateToISO(j.date), time: slipTimeToHHMM(j.time), categoryId: aiCat || guessExpenseCategoryId(categories, merchant) };
+}
+
+function SlipScanView({ categories = [], openWithPrefill, onBack }) {
+  const st = useStyles(); const t = useT();
+  const apiKey = (() => { try { return (localStorage.getItem(AI_KEY_STORAGE) || "").trim(); } catch { return ""; } })();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [result, setResult] = useState(null);
+  async function onFile(e) {
+    const f = e.target.files?.[0]; e.target.value = "";
+    if (!f) return;
+    setErr(""); setResult(null); setBusy(true);
+    try {
+      const [big, small] = await Promise.all([resizeImage(f, 1400), resizeImage(f, 480)]);
+      setPhoto(small);
+      setResult(await extractSlip(apiKey, big, categories));
+    } catch (x) { setErr(x?.message || "خواندن برگه ناموفق بود"); }
+    setBusy(false);
+  }
+  const cat = result?.categoryId ? categories.find((c) => c.id === result.categoryId) : null;
+  const catPath = cat ? accountPath(categories, cat).slice(1).join(" / ") : "";
+  const btn = (bg, fg) => ({ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px 8px", borderRadius: 12, background: bg, color: fg, fontWeight: 800, fontSize: 13.5, cursor: "pointer", opacity: busy ? 0.6 : 1, pointerEvents: busy ? "none" : "auto" });
+  return (
+    <div>
+      <div style={{ ...st.card, padding: 16, marginBottom: 14 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>اسکن برگه پوز</div>
+        <div style={{ fontSize: 12.5, color: t.sub, lineHeight: 2, marginBottom: 12 }}>
+          از برگه‌ی پوز عکس بگیر. نام فروشگاه، مبلغ، تاریخ و ساعت خوانده می‌شود و هزینه با دسته‌بندی مناسب (مثلاً نان خورشید ← خوراک) آماده می‌شود. فقط حساب را انتخاب و ثبت کن.
+        </div>
+        {!apiKey ? (
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: BRAND.crimson, lineHeight: 2 }}>برای خواندن برگه، ابتدا کلید API را در «تنظیمات پایه ← جمله روزانه انگلیسی با هوش مصنوعی» وارد کن (همان کلید جمله روزانه).</div>
+        ) : (
+          <div style={{ display: "flex", gap: 10 }}>
+            <label style={btn(BRAND.header, "#fff")}><Receipt size={17} /> عکس‌برداری<input type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: "none" }} /></label>
+            <label style={btn("#f1eef4", BRAND.header)}><ImageIcon size={17} /> از گالری<input type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} /></label>
+          </div>
+        )}
+        {busy && <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: BRAND.violet }}>در حال خواندن برگه...</div>}
+        {err && <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 700, color: BRAND.crimson, lineHeight: 1.9 }}>{err}</div>}
+      </div>
+      {result && (
+        <div style={{ ...st.card, padding: 16 }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            {photo && <img src={photo} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />}
+            <div style={{ flex: 1, fontSize: 13, lineHeight: 2.1 }}>
+              <div><span style={{ color: t.sub }}>فروشگاه: </span><b>{result.merchant || "—"}</b></div>
+              <div><span style={{ color: t.sub }}>مبلغ: </span><b>{toFaInt(result.amount)} ریال</b></div>
+              <div><span style={{ color: t.sub }}>تاریخ: </span><b>{result.date ? faLongDate(new Date(result.date)) : "امروز"}</b>{result.time && <> · <b>{result.time}</b></>}</div>
+              <div><span style={{ color: t.sub }}>حساب (دسته): </span><b>{catPath || "در مرحله بعد انتخاب کن"}</b></div>
+            </div>
+          </div>
+          <button onClick={() => { openWithPrefill({ type: "expense", amount: result.amount, date: result.date || undefined, time: result.time || undefined, note: result.merchant, categoryId: result.categoryId || undefined, photo: photo || undefined }); onBack?.(); }} style={{ ...st.primaryBtn, marginTop: 14 }}>ادامه: انتخاب حساب بانکی و ثبت</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
    جمله روزانه انگلیسی — اسپلاش هنگام هر بار باز شدن برنامه؛ جمله تا پایان همان روز ثابت است
    تلفظ با صدای دستگاه پخش می‌شود؛ ۲ ثانیه بعد از پایان تلفظ با فید وارد برنامه می‌شود.
 --------------------------------------------------------- */
@@ -1580,20 +1708,13 @@ const AI_TOPICS = ["greetings and introductions", "ordering food at a restaurant
 const readJson = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v ?? d; } catch { return d; } };
 const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error("زمان اتصال تمام شد")), ms))]);
 
-async function generateAiSentence(apiKey, avoid = []) {
-  const topic = AI_TOPICS[Math.floor(Math.random() * AI_TOPICS.length)];
-  const prompt = `Create ONE natural everyday English conversation sentence for a Persian-speaking learner (level A2-B1).
-Topic: ${topic}.
-Rules: 5 to 12 words, something a native speaker would really say, not a proverb or quote, no financial-advice sentences.
-Avoid these sentences already used: ${JSON.stringify(avoid.slice(-40))}.
-Return ONLY a JSON object, no other text, exactly in this shape:
-{"en":"the English sentence","faPron":"how to pronounce it, written in Persian letters","fa":"natural Persian translation"}`;
-  const body = { model: "claude-haiku-4-5-20251001", max_tokens: 400, temperature: 1, system: "You are a friendly English teacher. You reply with valid JSON only.", messages: [{ role: "user", content: prompt }] };
+// درخواست مشترک به Claude (هم برای جمله روزانه، هم برای خواندن برگه پوز) — خروجی: متن پاسخ
+async function callClaudeApi(apiKey, body, { connectTimeout = 6000, readTimeout = 10000 } = {}) {
   const url = "https://api.anthropic.com/v1/messages";
   const headers = { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
   let status, data;
   if (Capacitor.isNativePlatform()) {
-    const r = await CapacitorHttp.post({ url, headers, data: body, connectTimeout: 6000, readTimeout: 10000 });
+    const r = await CapacitorHttp.post({ url, headers, data: body, connectTimeout, readTimeout });
     status = r.status; data = typeof r.data === "string" ? JSON.parse(r.data) : r.data;
   } else {
     const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
@@ -1603,7 +1724,19 @@ Return ONLY a JSON object, no other text, exactly in this shape:
   if (status === 403) throw new Error("دسترسی با این کلید یا از این شبکه مجاز نیست");
   if (status === 429) throw new Error("محدودیت تعداد درخواست؛ کمی بعد دوباره امتحان کن");
   if (status < 200 || status >= 300) throw new Error(data?.error?.message || `خطای سرور (${status})`);
-  const text = (data?.content || []).map((b) => b.text || "").join("");
+  return (data?.content || []).map((b) => b.text || "").join("");
+}
+
+async function generateAiSentence(apiKey, avoid = []) {
+  const topic = AI_TOPICS[Math.floor(Math.random() * AI_TOPICS.length)];
+  const prompt = `Create ONE natural everyday English conversation sentence for a Persian-speaking learner (level A2-B1).
+Topic: ${topic}.
+Rules: 5 to 12 words, something a native speaker would really say, not a proverb or quote, no financial-advice sentences.
+Avoid these sentences already used: ${JSON.stringify(avoid.slice(-40))}.
+Return ONLY a JSON object, no other text, exactly in this shape:
+{"en":"the English sentence","faPron":"how to pronounce it, written in Persian letters","fa":"natural Persian translation"}`;
+  const body = { model: "claude-haiku-4-5-20251001", max_tokens: 400, temperature: 1, system: "You are a friendly English teacher. You reply with valid JSON only.", messages: [{ role: "user", content: prompt }] };
+  const text = await callClaudeApi(apiKey, body);
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("پاسخ نامعتبر بود");
   const j = JSON.parse(m[0]);
@@ -1794,7 +1927,6 @@ export default function App() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showCapture, setShowCapture] = useState(false);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [accountEditTarget, setAccountEditTarget] = useState(null);
   const [rates, setRates] = useState(null); // { usd: rialsPerUsd, fetchedAt }
   const [shortcuts, setShortcuts] = useState(() => settings.shortcuts || []);
@@ -1809,19 +1941,6 @@ export default function App() {
     }
   }
 
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const updateKeyboard = () => {
-      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKeyboardOpen(covered > 120);
-    };
-    updateKeyboard();
-    vv.addEventListener("resize", updateKeyboard);
-    vv.addEventListener("scroll", updateKeyboard);
-    return () => { vv.removeEventListener("resize", updateKeyboard); vv.removeEventListener("scroll", updateKeyboard); };
-  }, []);
 
   const shared = settings.sharedFamily;
 
@@ -2440,6 +2559,7 @@ function HomeView({
             { key: "calendar", title: "تقویم شمسی", icon: <CalendarDays size={17} />, color: BRAND.header },
           ] },
           { title: "ابزارها", items: [
+            { key: "slip", title: "اسکن برگه پوز (دوربین)", icon: <Receipt size={17} />, color: BRAND.fab },
             { key: "shortcuts", title: "میانبرهای تراکنش", icon: <ArrowLeftRight size={17} />, color: BRAND.mauve },
             { key: "sms", title: "پیامک بانکی", icon: <BellRing size={17} />, color: "#666" },
             { key: "calculator", title: "ماشین حساب", icon: <Type size={17} />, color: BRAND.teal },
@@ -2762,6 +2882,7 @@ function TransactionsView({ transactions, catById, accById, checks = [], filter,
                           <div style={{ fontWeight: 700, fontSize: 14 }}>{tx.type === "transfer" ? `انتقال به ${toAcc?.name || "—"}` : (cat?.name || "بدون دسته")}</div>
                           <div style={{ fontSize: 12, color: t.sub, marginTop: 3 }}>{tx.type === "expense" ? "از حساب" : tx.type === "income" ? "به حساب" : "از حساب"}: {acc?.name || "—"}</div>
                           {tx.note && <div style={{ fontSize: 12, color: t.sub, marginTop: 2 }}>{tx.note}</div>}
+                          {tx.side && <span style={{ display: "inline-block", marginTop: 4, fontSize: 10.5, fontWeight: 700, color: BRAND.violet, background: "rgba(88,39,119,.10)", borderRadius: 10, padding: "1px 8px" }}>{tx.side === "debtor" ? "بدهکار" : "بستانکار"}</span>}
                           {(tx.tags || []).length > 0 && (
                             <div style={{ display: "flex", gap: 5, marginTop: 5, flexWrap: "wrap" }}>
                               {tx.tags.map((tag, i) => <span key={i} style={{ fontSize: 10.5, background: t.border, color: t.sub, padding: "2px 8px", borderRadius: 20 }}>{tag}</span>)}
@@ -2815,6 +2936,7 @@ function OperationsView({ setSubView, onAdd }) {
     { title: "دارایی‌ها (ارز دیجیتال / بورس)", icon: <Bitcoin size={17} />, color: "#7a5cff", key: "assets" },
     { title: "اعضای منزل، رویداد و پروژه", icon: <Users size={17} />, color: BRAND.violet, key: "tags" },
     { title: "دوره مالی", icon: <CalendarDays size={17} />, color: BRAND.darkgreen, key: "periods" },
+    { title: "اسکن برگه پوز (دوربین)", icon: <Receipt size={17} />, color: BRAND.fab, key: "slip" },
     { title: "پیامک بانکی (افزودن نیمه‌خودکار)", icon: <BellRing size={17} />, color: "#666", key: "sms" },
     { title: "تقویم شمسی", icon: <CalendarDays size={17} />, color: BRAND.header, key: "calendar" },
     { title: "اطلاعات کاربری", icon: <Users size={17} />, color: "#444", key: "profile" },
@@ -3035,7 +3157,7 @@ function ReportsView({ categories = [], expenseByCategory, incomeByCategory, tot
 /* ---------------------------------------------------------
    SubView Router
 --------------------------------------------------------- */
-const SUBVIEW_TITLES = { cloud: "همگام‌سازی ابری (گیت‌هاب)", coa: "حساب‌ها", goals: "اهداف مالی و پس‌انداز", persons: "اشخاص و طرف حساب‌ها", debts: "بدهکاران و بستانکاران", currencies: "واحدهای پولی", calculator: "ماشین حساب", support: "پشتیبانی", shortcuts: "میانبرهای تراکنش", accounts: "حساب‌ها و کارت‌ها", categories: "حسابها", budgets: "بودجه‌بندی", recurring: "تراکنش‌های تکرارشونده", checks: "چک‌ها", loans: "وام و اقساط", bills: "یادآوری قبض‌ها", assets: "دارایی‌ها", calendar: "تقویم شمسی", settings: "تنظیمات و امنیت", profile: "ویرایش اطلاعات کاربری", backup: "پشتیبان‌گیری و بازیابی", access: "مدیریت دسترسی", basic: "تنظیمات پایه", tutorial: "آموزش Rexa", share: "ارسال برنامه به دیگران", rate: "امتیاز به برنامه", about: "درباره Rexa", tags: "اعضا، رویداد و پروژه", periods: "دوره مالی", sms: "پیامک بانکی" };
+const SUBVIEW_TITLES = { cloud: "همگام‌سازی ابری (گیت‌هاب)", coa: "حساب‌ها", goals: "اهداف مالی و پس‌انداز", persons: "اشخاص و طرف حساب‌ها", debts: "بدهکاران و بستانکاران", currencies: "واحدهای پولی", calculator: "ماشین حساب", support: "پشتیبانی", shortcuts: "میانبرهای تراکنش", accounts: "حساب‌ها و کارت‌ها", categories: "حسابها", budgets: "بودجه‌بندی", recurring: "تراکنش‌های تکرارشونده", checks: "چک‌ها", loans: "وام و اقساط", bills: "یادآوری قبض‌ها", assets: "دارایی‌ها", calendar: "تقویم شمسی", settings: "تنظیمات و امنیت", profile: "ویرایش اطلاعات کاربری", backup: "پشتیبان‌گیری و بازیابی", access: "مدیریت دسترسی", basic: "تنظیمات پایه", tutorial: "آموزش Rexa", share: "ارسال برنامه به دیگران", rate: "امتیاز به برنامه", about: "درباره Rexa", tags: "اعضا، رویداد و پروژه", periods: "دوره مالی", sms: "پیامک بانکی", slip: "اسکن برگه پوز" };
 function SubViewContent({ subView, ctx, onBack }) {
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px 112px", paddingTop: "calc(20px + env(safe-area-inset-top, 0px))" }}>
@@ -3069,6 +3191,7 @@ function SubViewContent({ subView, ctx, onBack }) {
       {subView === "tags" && <MembersEventsProjectsManager {...ctx} />}
       {subView === "periods" && <FiscalPeriodsManager {...ctx} />}
       {subView === "sms" && <BankSmsManager {...ctx} onBack={onBack} />}
+      {subView === "slip" && <SlipScanView {...ctx} onBack={onBack} />}
     </div>
   );
 }
@@ -3299,7 +3422,7 @@ function CategoriesManager({ categories, addCategory, deleteCategory, updateCate
     return list.map((c) => (
       <div key={c.id}>
         <CatRow c={c} onDelete={deleteCategory} onUpdate={updateCategory} fav={favorites.categories.includes(c.id)} onFav={() => toggleFavorite("categories", c.id)}
-          onAddSub={() => setSubFormFor(subFormFor === c.id ? null : c.id)} />
+          onAddSub={() => setSubFormFor(subFormFor === c.id ? null : c.id)} onTwoWay={() => updateCategory(c.id, { twoWay: !c.twoWay })} />
         {childrenOf(c.id).map((sub) => (
           <div key={sub.id} style={{ paddingRight: 22 }}>
             <CatRow c={sub} isSub onDelete={deleteCategory} onUpdate={updateCategory} fav={favorites.categories.includes(sub.id)} onFav={() => toggleFavorite("categories", sub.id)} />
@@ -3327,7 +3450,7 @@ function CategoriesManager({ categories, addCategory, deleteCategory, updateCate
       </div>
       <div style={{ fontSize: 11.5, color: "#8a8194", margin: "0 4px 12px", lineHeight: 1.9 }}>هر سرفصل می‌تواند زیرمجموعه داشته باشد؛ مثلاً خودرو ← بنزین. زیرمجموعه همان موردی است که هنگام ثبت هزینه یا درآمد انتخاب می‌شود.</div>
       {groupDefs.map((g) => {
-        const rows = topLevel(categories.filter(c => c.kind === g.kind));
+        const rows = topLevel(categories.filter(c => c.kind === g.kind || (c.twoWay && DEBT_GROUPS.includes(g.kind))));
         return <div key={g.kind}>
           <SectionTitle text={g.label} />
           <div style={{ ...st.card, padding: "4px 12px", marginBottom: 16 }}>
@@ -3338,7 +3461,7 @@ function CategoriesManager({ categories, addCategory, deleteCategory, updateCate
     </div>
   );
 }
-function CatRow({ c, onDelete, onUpdate, fav, onFav, onAddSub, isSub }) {
+function CatRow({ c, onDelete, onUpdate, fav, onFav, onAddSub, isSub, onTwoWay }) {
   const t = useT();
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(c.name);
@@ -3353,8 +3476,9 @@ function CatRow({ c, onDelete, onUpdate, fav, onFav, onAddSub, isSub }) {
   }
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 4px", borderBottom: `1px solid ${t.border}` }}>
-      <span style={{ fontSize: isSub ? 13 : 14, fontWeight: isSub ? 500 : 600, color: isSub ? t.sub : t.text }}>{isSub && "↳ "}{c.name}</span>
+      <span style={{ fontSize: isSub ? 13 : 14, fontWeight: isSub ? 500 : 600, color: isSub ? t.sub : t.text }}>{isSub && "↳ "}{c.name}{c.twoWay && <span style={{ marginRight: 6, fontSize: 10.5, fontWeight: 700, color: BRAND.violet, background: "rgba(88,39,119,.10)", borderRadius: 10, padding: "1px 7px" }}>↔ دو طرفه</span>}</span>
       <div style={{ display: "flex", gap: 8 }}>
+        {onTwoWay && <button onClick={onTwoWay} title="دو طرفه (هم بدهکار هم بستانکار)" style={{ background: "none", border: "none", cursor: "pointer", color: c.twoWay ? BRAND.violet : t.sub, opacity: c.twoWay ? 1 : 0.55 }}><ArrowLeftRight size={15} /></button>}
         <button onClick={onFav} style={{ background: "none", border: "none", cursor: "pointer" }}><Star size={15} fill={fav ? "#f5b301" : "none"} color="#f5b301" /></button>
         <button onClick={() => setEditing(true)} style={{ background: "none", border: "none", color: BRAND.violet, cursor: "pointer" }}><Pencil size={15} /></button>
         {onAddSub && <button onClick={onAddSub} style={{ background: "none", border: "none", color: BRAND.green, cursor: "pointer" }}><Plus size={15} /></button>}
@@ -4342,13 +4466,14 @@ const ACCOUNT_GROUPS = [
   { kind: "payable", label: "بستانکاران" }, { kind: "asset", label: "دارائی‌ها" },
   { kind: "liability", label: "بدهی‌ها" }, { kind: "capital", label: "سرمایه" },
 ];
+const DEBT_GROUPS = ["receivable", "payable"]; // حساب «دو طرفه» در هر دو گروه بدهکاران و بستانکاران دیده می‌شود
 const faKey = (x = "") => String(x).replace(/ي/g, "ی").replace(/ك/g, "ک").toLowerCase().trim();
 function accountPath(categories, c) {
   const names = [c.name]; let p = c; let guard = 0;
   while (p?.parentId && guard++ < 8) { p = categories.find((x) => x.id === p.parentId); if (p) names.unshift(p.name); }
   return [ACCOUNT_GROUPS.find((g) => g.kind === c.kind)?.label || "سایر", ...names];
 }
-function AccountsTree({ categories = [], addCategory, deleteCategory, updateCategory, favorites, toggleFavorite, mode = "manage", value, onPick }) {
+function AccountsTree({ categories = [], transactions = [], addCategory, deleteCategory, updateCategory, favorites, toggleFavorite, mode = "manage", value, onPick }) {
   const st = useStyles();
   const t = useT();
   const picking = mode === "pick";
@@ -4361,18 +4486,31 @@ function AccountsTree({ categories = [], addCategory, deleteCategory, updateCate
   const [showNew, setShowNew] = useState(false);
   const [newKind, setNewKind] = useState("expense");
   const [newName, setNewName] = useState("");
+  const [newTwoWay, setNewTwoWay] = useState(false);
+  const [editTwoWay, setEditTwoWay] = useState(false);
   const favIds = favorites?.categories || [];
   const q = faKey(query);
 
   const hasParent = (c) => c.parentId && categories.some((x) => x.id === c.parentId);
   const childrenOf = (id) => categories.filter((c) => c.parentId === id);
-  const rootsOf = (kind) => categories.filter((c) => c.kind === kind && !hasParent(c));
+  const rootsOf = (kind) => categories.filter((c) => !hasParent(c) && (c.kind === kind || (c.twoWay && DEBT_GROUPS.includes(kind))));
+  // جمع بدهکار / بستانکار یک حساب دو طرفه (به‌همراه زیرمجموعه‌هایش)
+  const twoWayTotals = (c) => {
+    const ids = new Set([c.id, ...categories.filter((x) => x.parentId === c.id).map((x) => x.id)]);
+    let debit = 0, credit = 0;
+    transactions.forEach((tx) => {
+      if (!ids.has(tx.categoryId)) return;
+      const side = tx.side || (tx.type === "income" ? "creditor" : "debtor");
+      if (side === "creditor") credit += Number(tx.amount || 0); else debit += Number(tx.amount || 0);
+    });
+    return { debit, credit };
+  };
   const toggle = (k) => setExpanded((e) => ({ ...e, [k]: !e[k] }));
 
-  function create(kind, parentId, name) {
+  function create(kind, parentId, name, twoWay = false) {
     const nm = String(name || "").trim(); if (!nm) return;
     const id = uid();
-    addCategory?.({ id, name: nm, kind, ...(parentId ? { parentId } : {}) });
+    addCategory?.({ id, name: nm, kind, ...(parentId ? { parentId } : {}), ...(twoWay ? { twoWay: true } : {}) });
     setExpanded((e) => ({ ...e, [parentId || `g:${kind}`]: true }));
     if (picking) onPick?.(id);
   }
@@ -4397,21 +4535,28 @@ function AccountsTree({ categories = [], addCategory, deleteCategory, updateCate
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "9px 4px", paddingRight: 4 + depth * 18, borderBottom: `1px solid ${t.border}`, background: selected ? "rgba(88,39,119,.08)" : "transparent" }}>
           {editId === c.id ? (<>
             <input autoFocus value={editVal} onChange={(e) => setEditVal(e.target.value)} style={{ flex: 1, padding: "6px 10px", borderRadius: 7, border: `1.5px solid ${t.inputBorder}`, background: t.input, color: t.text, fontSize: 13 }} />
-            <button onClick={() => { if (editVal.trim()) updateCategory?.(c.id, { name: editVal.trim() }); setEditId(null); }} style={{ background: BRAND.green, border: "none", borderRadius: 7, color: "#fff", padding: "6px 10px", cursor: "pointer" }}><Check size={14} /></button>
+            <button onClick={() => { if (editVal.trim()) updateCategory?.(c.id, { name: editVal.trim(), ...(depth === 0 ? { twoWay: editTwoWay } : {}) }); setEditId(null); }} style={{ background: BRAND.green, border: "none", borderRadius: 7, color: "#fff", padding: "6px 10px", cursor: "pointer" }}><Check size={14} /></button>
             <button onClick={() => setEditId(null)} style={smallBtn(t.sub)}><X size={14} /></button>
           </>) : (<>
             <div onClick={picking ? () => onPick?.(c.id) : kids.length ? () => toggle(c.id) : undefined} style={{ flex: 1, minWidth: 0, cursor: picking || kids.length ? "pointer" : "default" }}>
-              <div style={{ fontSize: depth ? 13 : 14, fontWeight: selected ? 800 : depth ? 500 : 600, color: t.text }}>{depth > 0 && "↳ "}{c.name}</div>
+              <div style={{ fontSize: depth ? 13 : 14, fontWeight: selected ? 800 : depth ? 500 : 600, color: t.text }}>{depth > 0 && "↳ "}{c.name}{c.twoWay && <span style={{ marginRight: 6, fontSize: 10.5, fontWeight: 700, color: BRAND.violet, background: "rgba(88,39,119,.10)", borderRadius: 10, padding: "1px 7px" }}>↔ دو طرفه</span>}</div>
+              {c.twoWay && !picking && !flat && (() => { const tt = twoWayTotals(c); return (tt.debit || tt.credit) ? <div style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>بدهکار: {toFaInt(tt.debit)} · بستانکار: {toFaInt(tt.credit)} · مانده: {toFaInt(Math.abs(tt.debit - tt.credit))} {tt.debit >= tt.credit ? "بدهکار" : "بستانکار"}</div> : null; })()}
               {flat && path && <div style={{ fontSize: 11, color: t.sub, marginTop: 2 }}>{path}</div>}
             </div>
             {selected && <Check size={16} color={BRAND.darkgreen} />}
             {!picking && toggleFavorite && <button onClick={() => toggleFavorite("categories", c.id)} style={smallBtn("#f5b301")}><Star size={15} fill={favIds.includes(c.id) ? "#f5b301" : "none"} color="#f5b301" /></button>}
-            {!picking && <button onClick={() => { setEditId(c.id); setEditVal(c.name); }} style={smallBtn(BRAND.violet)}><Pencil size={15} /></button>}
+            {!picking && <button onClick={() => { setEditId(c.id); setEditVal(c.name); setEditTwoWay(!!c.twoWay); }} style={smallBtn(BRAND.violet)}><Pencil size={15} /></button>}
             <button onClick={() => { setAddFor(addFor?.parentId === c.id ? null : { kind: c.kind, parentId: c.id }); setAddName(""); setExpanded((e) => ({ ...e, [c.id]: true })); }} style={smallBtn(BRAND.green)}><Plus size={15} /></button>
             {!picking && <button onClick={() => { if (window.confirm(`«${c.name}»${childrenOf(c.id).length ? " و زیرمجموعه‌هایش" : ""} حذف شود؟`)) deleteCategory?.(c.id); }} style={smallBtn(BRAND.crimson)}><Trash2 size={15} /></button>}
             {kids.length > 0 ? <button onClick={() => toggle(c.id)} style={smallBtn(t.sub)}>{arrowIcon(isOpen)}</button> : <span style={{ width: 25, flexShrink: 0 }} />}
           </>)}
         </div>
+        {editId === c.id && depth === 0 && (
+          <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 12px 10px", fontSize: 12.5, fontWeight: 700, color: t.text, cursor: "pointer" }}>
+            <input type="checkbox" checked={editTwoWay} onChange={(e) => setEditTwoWay(e.target.checked)} style={{ width: 18, height: 18 }} />
+            دو طرفه (هم بدهکار هم بستانکار — مثل بیمه)
+          </label>
+        )}
         {isOpen && kids.map((k) => renderNode(k, depth + 1))}
         {addFor?.parentId === c.id && renderAddForm(c.kind, c.id, depth + 1)}
       </div>
@@ -4467,7 +4612,11 @@ function AccountsTree({ categories = [], addCategory, deleteCategory, updateCate
               {ACCOUNT_GROUPS.map((g) => <option key={g.kind} value={g.kind}>{g.label}</option>)}
             </select>
             <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="نام حساب" style={st.input} />
-            <button onClick={() => { const nm = newName; setNewName(""); setShowNew(false); create(newKind, null, nm); }} style={st.primaryBtn}>افزودن</button>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 12.5, fontWeight: 700, color: t.text, cursor: "pointer" }}>
+              <input type="checkbox" checked={newTwoWay} onChange={(e) => setNewTwoWay(e.target.checked)} style={{ width: 18, height: 18 }} />
+              دو طرفه (هم بدهکار هم بستانکار — مثل بیمه)
+            </label>
+            <button onClick={() => { const nm = newName, tw = newTwoWay; setNewName(""); setNewTwoWay(false); setShowNew(false); create(newKind, null, nm, tw); }} style={st.primaryBtn}>افزودن</button>
           </div>
         )}
       </div>
@@ -4490,46 +4639,6 @@ function AccountPickerField({ categories, value, onChange, addCategory, st }) {
           <div style={{ fontWeight: 800, fontSize: 15 }}>حساب‌ها</div><span style={{ width: 31 }} />
         </div>
         <AccountsTree mode="pick" categories={categories} addCategory={addCategory} value={value} onPick={(id) => { onChange(id); setOpen(false); }} />
-      </div>
-    </div>)}
-  </>;
-}
-
-function CategoryPicker({ categories, value, onChange, kind, st }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const [parentId, setParentId] = useState(null);
-  const list = categories.filter((c) => c.kind === kind);
-  const childrenOf = (id) => list.filter((c) => c.parentId === id);
-  const selected = list.find((c) => c.id === value);
-  const parent = selected?.parentId ? list.find((c) => c.id === selected.parentId) : null;
-  const roots = list.filter((c) => !c.parentId);
-  const visible = parentId ? childrenOf(parentId) : roots;
-  const display = selected ? (parent ? `${parent.name} / ${selected.name}` : selected.name) : "انتخاب دسته‌بندی";
-
-  function choose(c) {
-    const children = childrenOf(c.id);
-    if (children.length) { setParentId(c.id); return; }
-    onChange(c.id); setOpen(false); setParentId(null);
-  }
-  return <>
-    <button type="button" onClick={() => { setOpen(true); setParentId(selected?.parentId || null); }} style={{ width: "100%", minHeight: 46, marginBottom: 8, padding: "9px 12px", borderRadius: 10, border: `1.5px solid ${t.inputBorder}`, background: t.input, color: selected ? t.text : t.sub, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, cursor: "pointer", fontFamily: "inherit", textAlign: "right" }}>
-      <span style={{ fontSize: 13.5, fontWeight: selected ? 700 : 500 }}>{display}</span><ChevronLeft size={17} style={{ transform: "rotate(90deg)", flexShrink: 0 }} />
-    </button>
-    {open && toBody(<div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.35)", zIndex: 500, display: "flex", alignItems: "flex-end", justifyContent: "center", maxWidth: 480, margin: "0 auto", fontFamily: FONT, direction: "rtl" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, width: "100%", maxHeight: "72vh", overflowY: "auto", borderRadius: "18px 18px 0 0", padding: "16px 14px calc(18px + env(safe-area-inset-bottom, 0px))" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <button type="button" onClick={() => { if (parentId) setParentId(null); else setOpen(false); }} style={{ border: 0, background: "transparent", color: t.sub, padding: 5 }}>{parentId ? <ChevronRight size={21} /> : <X size={21} />}</button>
-          <div style={{ fontWeight: 800, fontSize: 15 }}>{parentId ? `${list.find(c => c.id === parentId)?.name || ""} / زیرمجموعه‌ها` : "دسته‌بندی"}</div><span style={{ width: 24 }} />
-        </div>
-        {visible.map((c) => {
-          const hasChildren = childrenOf(c.id).length > 0;
-          const isSelected = c.id === value;
-          return <button type="button" key={c.id} onClick={() => choose(c)} style={{ width: "100%", border: 0, borderBottom: `1px solid ${t.border}`, background: isSelected ? "rgba(88,39,119,.08)" : "transparent", padding: "13px 8px", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "inherit", cursor: "pointer", color: t.text }}>
-            <span style={{ fontSize: 14, fontWeight: isSelected ? 800 : 600 }}>{c.name}</span>{hasChildren ? <ChevronLeft size={17} color={t.sub} /> : isSelected ? <Check size={17} color={BRAND.darkgreen} /> : null}
-          </button>;
-        })}
-        {visible.length === 0 && <EmptyRow text="زیرمجموعه‌ای ثبت نشده" />}
       </div>
     </div>)}
   </>;
@@ -4560,7 +4669,10 @@ function AddTransactionSheet({ accounts, categories, favorites, members = [], ev
   const [projectId, setProjectId] = useState(initial?.projectId || "");
   const [inlineAdd, setInlineAdd] = useState(null);
   const [inlineName, setInlineName] = useState("");
+  const [side, setSide] = useState(initial?.side || "");
 
+  const twoWayPicked = !!categories.find((c) => c.id === categoryId)?.twoWay;
+  const effectiveSide = side || (type === "income" ? "creditor" : "debtor");
   const filteredCats = categories.filter((c) => c.kind === type);
   const favCats = filteredCats.filter((c) => favorites.categories.includes(c.id));
   const canSubmit = amount && Number(amount) > 0 && accountId && (type === "transfer" ? toAccountId && toAccountId !== accountId : categoryId);
@@ -4583,14 +4695,14 @@ function AddTransactionSheet({ accounts, categories, favorites, members = [], ev
 
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           {[{ k: "expense", l: "پرداخت", c: BRAND.crimson }, { k: "income", l: "دریافت", c: BRAND.darkgreen }, { k: "transfer", l: "انتقال", c: BRAND.violet }].map((o) => (
-            <button key={o.k} onClick={() => { setType(o.k); setCategoryId(""); }} style={{ flex: 1, padding: "10px 4px", borderRadius: 9, border: `1.5px solid ${type === o.k ? o.c : "#e3e0ea"}`, background: type === o.k ? o.c : "#fff", color: type === o.k ? "#fff" : "#241a30", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>{o.l}</button>
+            <button key={o.k} onClick={() => { setType(o.k); setCategoryId(""); setSide(""); }} style={{ flex: 1, padding: "10px 4px", borderRadius: 9, border: `1.5px solid ${type === o.k ? o.c : "#e3e0ea"}`, background: type === o.k ? o.c : "#fff", color: type === o.k ? "#fff" : "#241a30", fontWeight: 700, cursor: "pointer", fontSize: 13.5 }}>{o.l}</button>
           ))}
         </div>
 
         {favCats.length > 0 && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
             {favCats.map((c) => (
-              <button key={c.id} onClick={() => { const hasChildren = filteredCats.some(x => x.parentId === c.id); if (hasChildren) { const el = document.activeElement; setCategoryId(c.id); } else setCategoryId(c.id); }} style={{ display: "flex", alignItems: "center", gap: 4, background: categoryId === c.id ? BRAND.header : "#f1eef4", color: categoryId === c.id ? "#fff" : "#3E1461", border: "none", borderRadius: 20, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              <button key={c.id} onClick={() => setCategoryId(c.id)} style={{ display: "flex", alignItems: "center", gap: 4, background: categoryId === c.id ? BRAND.header : "#f1eef4", color: categoryId === c.id ? "#fff" : "#3E1461", border: "none", borderRadius: 20, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                 <Star size={11} fill="#f5b301" color="#f5b301" /> {c.name}
               </button>
             ))}
@@ -4607,6 +4719,17 @@ function AddTransactionSheet({ accounts, categories, favorites, members = [], ev
               <div style={{ flex: 1 }}><AccountPickerField categories={categories} addCategory={onAddCategory} value={categoryId} onChange={setCategoryId} st={st} /></div>
               <button type="button" onClick={() => { setInlineAdd("category"); setInlineName(""); }} style={{ ...miniBtn, width: 44, height: 44, background: BRAND.header, color: "#fff" }} title="افزودن دسته"><Plus size={18} /></button>
             </div>
+            {twoWayPicked && (
+              <div style={{ marginBottom: 10 }}>
+                <label style={st.label}>این حساب دو طرفه است — طرف حساب</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{ k: "debtor", l: "بدهکار" }, { k: "creditor", l: "بستانکار" }].map((o) => (
+                    <button key={o.k} type="button" onClick={() => setSide(o.k)} style={{ flex: 1, padding: "9px 4px", borderRadius: 9, border: `1.5px solid ${effectiveSide === o.k ? BRAND.violet : "#e3e0ea"}`, background: effectiveSide === o.k ? BRAND.violet : "#fff", color: effectiveSide === o.k ? "#fff" : "#241a30", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>{o.l}</button>
+                  ))}
+                </div>
+                <div style={{ fontSize: 11, color: "#8a8194", marginTop: 5, lineHeight: 1.8 }}>مثلاً بیمه: پرداخت حق بیمه = بدهکار، دریافت خسارت = بستانکار.</div>
+              </div>
+            )}
             <label style={st.label}>{type === "expense" ? "از حساب" : "به حساب"}</label>
             <div style={{ display: "flex", gap: 6 }}>
               <select value={accountId} onChange={(e) => setAccountId(e.target.value)} style={{ ...st.input, marginBottom: 8, flex: 1 }}>
@@ -4697,6 +4820,7 @@ function AddTransactionSheet({ accounts, categories, favorites, members = [], ev
             ...(initial?._editId ? { _editId: initial._editId } : {}),
             type, amount: Number(amount), categoryId, accountId,
             toAccountId: type === "transfer" ? toAccountId : undefined,
+            side: twoWayPicked ? effectiveSide : undefined,
             date, time, note, photo: photo || undefined,
             tags: tagsInput.split(",").map((s) => s.trim()).filter(Boolean),
             memberId: memberId || undefined, eventId: eventId || undefined, projectId: projectId || undefined,
@@ -4980,7 +5104,7 @@ function AiSentenceSettings() {
   return <div style={{ ...st.card, padding: 16, marginTop: 14 }}>
     <SectionTitle text="جمله روزانه انگلیسی با هوش مصنوعی" />
     <div style={{ fontSize: 12.5, lineHeight: 2, color: t.sub, marginBottom: 10 }}>
-      با وارد کردن کلید API شرکت Anthropic (از console.anthropic.com)، هر روز یک جمله‌ی مکالمه‌ی تازه و متفاوت ساخته می‌شود و تا پایان همان روز ثابت می‌ماند. کلید فقط روی همین دستگاه ذخیره می‌شود و در پشتیبان‌گیری نمی‌رود. بدون کلید یا در صورت قطع اینترنت، از ۴۰ جمله‌ی داخلی استفاده می‌شود.
+      با وارد کردن کلید API شرکت Anthropic (از console.anthropic.com)، هر روز یک جمله‌ی مکالمه‌ی تازه و متفاوت ساخته می‌شود و تا پایان همان روز ثابت می‌ماند. کلید فقط روی همین دستگاه ذخیره می‌شود و در پشتیبان‌گیری نمی‌رود. بدون کلید یا در صورت قطع اینترنت، از ۴۰ جمله‌ی داخلی استفاده می‌شود. همین کلید برای خواندن برگه‌ی پوز (بخش عملیات) هم به کار می‌رود.
     </div>
     <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-..." style={{ ...st.input, direction: "ltr", textAlign: "left" }} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
     <div style={{ display: "flex", gap: 8 }}>
